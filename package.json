@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:ui": "rm -rf dist && cd ../open/part2/phonebook && npm run build && cp -r build ../../../open3",
+    "dev": "nodemon index.js"
   },
   "author": "",
   "license": "ISC",
