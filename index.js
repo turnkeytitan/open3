@@ -1,10 +1,14 @@
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
+const Book = require("./book");
 const app = express();
+
 app.use(cors());
 app.use(express.static("build"));
 app.use(express.json());
+
 function format(tokens, req, res) {
   const body = tokens.method(req, res) === "POST" ? JSON.stringify(req.body) : "";
   return [
@@ -20,75 +24,83 @@ function format(tokens, req, res) {
 }
 app.use(morgan(format));
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
-app.get("/api/persons", (request, response) => {
-  response.json(persons);
+app.get("/api/persons", (request, response, next) => {
+  Book.find({})
+    .then((contacts) => response.json(contacts))
+    .catch(next);
 });
 
-app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  const person = persons.find((obj) => obj.id === id);
-  if (!person) {
-    return response.sendStatus(404);
-  }
-  response.json(person);
+app.get("/api/persons/:id", async (request, response) => {
+  try {
+    const person = await Book.findById(request.params.id);
+    response.json(person);
+  } catch (error) {}
 });
 
-app.get("/info", (request, response) => {
+app.get("/info", (request, response, next) => {
   let date = new Date(Date.now());
-
-  response.send(`<p>Phonebook has info for ${persons.length} people</p><p>${date}</p>`);
+  Book.find({})
+    .then((contacts) => {
+      response.send(
+        `<p>Phonebook has info for ${contacts.length} people</p><p>${date}</p>`
+      );
+    })
+    .catch(next);
 });
 
-app.delete("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  persons = persons.filter((person) => person.id !== id);
-
-  response.status(204).end();
-});
-
-app.post("/api/persons", (request, response) => {
-  const id = Math.round(Math.random() * 1000000);
-  const { name, number } = request.body;
-  if (persons.find((person) => person.name === name)) {
-    return response.status(400).json({ error: "name must be unique" });
+app.delete("/api/persons/:id", (request, response, next) => {
+  console.log(request.params.id);
+  try {
+    Book.findByIdAndDelete(request.params.id)
+      .then((result) => {
+        console.log(result);
+        response.status(204).end();
+      })
+      .catch(next);
+  } catch (error) {
+    next(error);
   }
-  if (!number) {
-    return response.status(422).json({
-      error: "number missing",
-    });
-  }
-  const person = {
-    id,
-    name,
-    number,
-  };
-  persons = persons.concat(person);
-
-  response.status(204).end();
 });
+
+app.post("/api/persons", async (request, response, next) => {
+  const { name, num } = request.body;
+  const contact = new Book({ name, num });
+  const existing = await Book.find({ name });
+  if (existing) {
+    await contact
+      .save()
+      .then((result) => response.status(204).json(result))
+      .catch(next);
+  } else {
+    response.status(403).json();
+  }
+});
+
+app.put("/api/persons/:id", async (request, response, next) => {
+  try {
+    const { id, ...rest } = request.body;
+    const found = await Book.findByIdAndUpdate(id, rest);
+    if (found) {
+      response.status(204).end();
+    } else {
+      response.status(410).end("No such contact found");
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
+  }
+
+  next(error);
+};
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

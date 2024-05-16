@@ -16,16 +16,18 @@ if (len > 3 && len !== 5) {
 
 mongoose.connect(url);
 
+const phonebook = mongoose.connection.useDb("phonebook");
+
 const contactSchema = new mongoose.Schema({
   name: String,
-  number: String,
+  num: String,
 });
 
-const Contact = mongoose.model("Contact", contactSchema);
+const Contact = phonebook.model("Contact", contactSchema);
 if (len === 5) {
   const contact = new Contact({
     name: arg[3],
-    number: arg[4],
+    num: arg[4],
   });
 
   contact.save().then((result) => {
