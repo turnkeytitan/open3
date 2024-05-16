@@ -79,7 +79,11 @@ app.post("/api/persons", async (request, response, next) => {
 app.put("/api/persons/:id", async (request, response, next) => {
   try {
     const { id, ...rest } = request.body;
-    const found = await Book.findByIdAndUpdate(id, rest);
+    const found = await Book.findByIdAndUpdate(id, rest, {
+      new: true,
+      runValidators: true,
+      context: "query",
+    });
     if (found) {
       response.status(204).end();
     } else {
@@ -91,10 +95,12 @@ app.put("/api/persons/:id", async (request, response, next) => {
 });
 
 const errorHandler = (error, request, response, next) => {
-  console.error(error.message);
-
+  console.error("ERROR:", error.name);
+  console.table(error);
   if (error.name === "CastError") {
-    return response.status(400).send({ error: "malformatted id" });
+    return response.status(400).send({ message: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).json({ message: error.message });
   }
 
   next(error);
