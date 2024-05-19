@@ -17,7 +17,6 @@ if (len > 3 && len !== 5) {
 mongoose.connect(url);
 
 const phonebook = mongoose.connection.useDb("phonebook");
-
 const contactSchema = new mongoose.Schema({
   name: String,
   num: String,
@@ -30,14 +29,14 @@ if (len === 5) {
     num: arg[4],
   });
 
-  contact.save().then((result) => {
+  contact.save().then(() => {
     console.log(`added ${arg[3]} number ${arg[4]} to phonebook`);
     mongoose.connection.close();
   });
 } else {
   Contact.find({}).then((result) => {
     console.log("phonebook:");
-    result.forEach((note, i) => {
+    result.forEach((note) => {
       console.log(note.name, note.number);
     });
     mongoose.connection.close();

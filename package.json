@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "build:ui": "rm -rf dist && cd ../open/part2/phonebook && npm run build && cp -r build ../../../open3",
+    "build:ui": "rm -rf build && cd ../open/part2/phonebook && npm run build && cp -r build ../../../open3",
     "dev": "nodemon index.js"
   },
   "engines": {
@@ -22,6 +22,10 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "@eslint/js": "^9.3.0",
+    "eslint": "^9.3.0",
+    "globals": "^15.2.0",
+    "nodemon": "^3.1.0",
+    "prettier": "3.2.5"
   }
 }
